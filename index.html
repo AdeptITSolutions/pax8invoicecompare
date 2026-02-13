@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pax8 Invoice Comparison</title>
+    <meta name="description"
+        content="Compare two Pax8 CSV invoices side-by-side. Grouped by company and SKU with visual highlighting of every change." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="index.css" />
+</head>
+
+<body>
+
+    <!-- ───── Background particles ───── -->
+    <div class="bg-particles" aria-hidden="true">
+        <div class="particle p1"></div>
+        <div class="particle p2"></div>
+        <div class="particle p3"></div>
+        <div class="particle p4"></div>
+        <div class="particle p5"></div>
+    </div>
+
+    <!-- ───── Header ───── -->
+    <header class="site-header">
+        <div class="logo">
+            <svg class="logo-icon" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="2" y="4" width="12" height="16" rx="2" stroke="currentColor" stroke-width="2" />
+                <rect x="18" y="12" width="12" height="16" rx="2" stroke="currentColor" stroke-width="2" />
+                <path d="M14 12 L18 12" stroke="currentColor" stroke-width="2" stroke-dasharray="2 2" />
+                <circle cx="16" cy="12" r="2" fill="currentColor" />
+            </svg>
+            <h1>Pax8 Invoice<span class="accent"> Comparison</span></h1>
+        </div>
+        <p class="tagline">Upload two Pax8 invoices and instantly see every difference, grouped by company &amp; SKU.
+        </p>
+    </header>
+
+    <!-- ───── Main content ───── -->
+    <main>
+
+        <!-- Upload Section -->
+        <section id="upload-section" class="upload-section">
+            <div class="upload-grid">
+                <!-- File A -->
+                <div class="upload-card" id="upload-card-a">
+                    <div class="upload-dropzone" id="dropzone-a" tabindex="0" role="button"
+                        aria-label="Upload first CSV file">
+                        <div class="dropzone-inner">
+                            <svg class="upload-icon" viewBox="0 0 48 48" fill="none">
+                                <path d="M24 6v28M14 16l10-10 10 10" stroke="currentColor" stroke-width="3"
+                                    stroke-linecap="round" stroke-linejoin="round" />
+                                <path d="M6 32v6a4 4 0 004 4h28a4 4 0 004-4v-6" stroke="currentColor" stroke-width="3"
+                                    stroke-linecap="round" />
+                            </svg>
+                            <p class="dropzone-label">Drop <strong>Invoice A</strong> here</p>
+                            <p class="dropzone-hint">or click to browse · CSV files only</p>
+                        </div>
+                        <input type="file" id="file-input-a" accept=".csv" hidden />
+                    </div>
+                    <div class="file-info" id="file-info-a"></div>
+                </div>
+
+                <!-- Divider -->
+                <div class="upload-divider">
+                    <span>VS</span>
+                </div>
+
+                <!-- File B -->
+                <div class="upload-card" id="upload-card-b">
+                    <div class="upload-dropzone" id="dropzone-b" tabindex="0" role="button"
+                        aria-label="Upload second CSV file">
+                        <div class="dropzone-inner">
+                            <svg class="upload-icon" viewBox="0 0 48 48" fill="none">
+                                <path d="M24 6v28M14 16l10-10 10 10" stroke="currentColor" stroke-width="3"
+                                    stroke-linecap="round" stroke-linejoin="round" />
+                                <path d="M6 32v6a4 4 0 004 4h28a4 4 0 004-4v-6" stroke="currentColor" stroke-width="3"
+                                    stroke-linecap="round" />
+                            </svg>
+                            <p class="dropzone-label">Drop <strong>Invoice B</strong> here</p>
+                            <p class="dropzone-hint">or click to browse · CSV files only</p>
+                        </div>
+                        <input type="file" id="file-input-b" accept=".csv" hidden />
+                    </div>
+                    <div class="file-info" id="file-info-b"></div>
+                </div>
+            </div>
+
+            <!-- Compare Button -->
+            <div class="compare-actions">
+                <button id="compare-btn" class="btn-compare" disabled>
+                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none">
+                        <path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>
+                    Compare Invoices
+                </button>
+            </div>
+        </section>
+
+        <!-- Results Section (hidden initially) -->
+        <section id="results-section" class="results-section hidden">
+
+            <!-- Summary Cards -->
+            <div class="summary-bar">
+                <div class="summary-card summary-total" id="summary-total">
+                    <span class="summary-value">0</span>
+                    <span class="summary-label">Total Rows</span>
+                </div>
+                <div class="summary-card summary-unchanged" id="summary-unchanged">
+                    <span class="summary-value">0</span>
+                    <span class="summary-label">Unchanged</span>
+                </div>
+                <div class="summary-card summary-modified" id="summary-modified">
+                    <span class="summary-value">0</span>
+                    <span class="summary-label">Modified</span>
+                </div>
+                <div class="summary-card summary-added" id="summary-added">
+                    <span class="summary-value">0</span>
+                    <span class="summary-label">Added in B</span>
+                </div>
+                <div class="summary-card summary-removed" id="summary-removed">
+                    <span class="summary-value">0</span>
+                    <span class="summary-label">Removed from A</span>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="filter-bar">
+                <span class="filter-label">Show:</span>
+                <button class="filter-btn active" data-filter="all" id="filter-all">All</button>
+                <button class="filter-btn" data-filter="modified" id="filter-modified">Modified</button>
+                <button class="filter-btn" data-filter="added" id="filter-added">Added</button>
+                <button class="filter-btn" data-filter="removed" id="filter-removed">Removed</button>
+                <button class="filter-btn" data-filter="unchanged" id="filter-unchanged">Unchanged</button>
+
+                <div class="filter-spacer"></div>
+
+                <div class="search-box">
+                    <svg class="search-icon" viewBox="0 0 20 20" fill="none">
+                        <circle cx="8.5" cy="8.5" r="5.5" stroke="currentColor" stroke-width="2" />
+                        <path d="M13 13l4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                    </svg>
+                    <input type="text" id="search-input" placeholder="Search company or SKU…" />
+                </div>
+            </div>
+
+            <!-- Key Column Selector -->
+            <div class="key-column-bar" id="key-column-bar">
+                <label class="key-column-label" for="key-column-select">Match rows by:</label>
+                <select id="key-column-select" class="key-column-select">
+                    <option value="__row_index__">Row Position (default)</option>
+                </select>
+                <button id="recompare-btn" class="btn-recompare">Re-Compare</button>
+            </div>
+
+            <!-- Comparison Table -->
+            <div class="table-wrapper" id="table-wrapper">
+                <table class="diff-table" id="diff-table">
+                    <thead id="diff-thead"></thead>
+                    <tbody id="diff-tbody"></tbody>
+                </table>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="back-actions">
+                <button id="back-btn" class="btn-back">
+                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none">
+                        <path d="M15 19l-7-7 7-7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>
+                    Upload New Files
+                </button>
+                <button id="export-btn" class="btn-export">
+                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none">
+                        <path d="M12 5v14M5 12l7 7 7-7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>
+                    Export to Excel
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ───── Footer ───── -->
+    <footer class="site-footer">
+        <p>Pax8 Invoice Comparison &middot; All processing happens locally in your browser. Your data never leaves your
+            device.</p>
+    </footer>
+
+    <!-- SheetJS for Excel export -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>

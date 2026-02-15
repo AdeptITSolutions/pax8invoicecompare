@@ -387,6 +387,10 @@ main {
   margin-bottom: 24px;
 }
 
+.summary-bar-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
 .summary-card {
   background: var(--bg-glass);
   backdrop-filter: blur(20px);
@@ -426,28 +430,12 @@ main {
   color: var(--text-secondary);
 }
 
-.summary-modified .summary-value {
+.summary-changed .summary-value {
   color: var(--diff-modified-text);
 }
 
-.summary-modified {
+.summary-changed {
   border-color: var(--diff-modified-border);
-}
-
-.summary-added .summary-value {
-  color: var(--diff-added-text);
-}
-
-.summary-added {
-  border-color: var(--diff-added-border);
-}
-
-.summary-removed .summary-value {
-  color: var(--diff-removed-text);
-}
-
-.summary-removed {
-  border-color: var(--diff-removed-border);
 }
 
 /* ── Filter Bar ── */
@@ -874,14 +862,14 @@ main {
     justify-self: center;
   }
 
-  .summary-bar {
+  .summary-bar-3 {
     grid-template-columns: repeat(3, 1fr);
   }
 }
 
 @media (max-width: 600px) {
-  .summary-bar {
-    grid-template-columns: repeat(2, 1fr);
+  .summary-bar-3 {
+    grid-template-columns: 1fr;
   }
 
   .filter-bar {

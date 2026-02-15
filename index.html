@@ -106,26 +106,18 @@
         <section id="results-section" class="results-section hidden">
 
             <!-- Summary Cards -->
-            <div class="summary-bar">
+            <div class="summary-bar summary-bar-3">
                 <div class="summary-card summary-total" id="summary-total">
                     <span class="summary-value">0</span>
-                    <span class="summary-label">Total Rows</span>
+                    <span class="summary-label">Total SKUs</span>
+                </div>
+                <div class="summary-card summary-changed" id="summary-changed">
+                    <span class="summary-value">0</span>
+                    <span class="summary-label">Changed</span>
                 </div>
                 <div class="summary-card summary-unchanged" id="summary-unchanged">
                     <span class="summary-value">0</span>
                     <span class="summary-label">Unchanged</span>
-                </div>
-                <div class="summary-card summary-modified" id="summary-modified">
-                    <span class="summary-value">0</span>
-                    <span class="summary-label">Modified</span>
-                </div>
-                <div class="summary-card summary-added" id="summary-added">
-                    <span class="summary-value">0</span>
-                    <span class="summary-label">Added in B</span>
-                </div>
-                <div class="summary-card summary-removed" id="summary-removed">
-                    <span class="summary-value">0</span>
-                    <span class="summary-label">Removed from A</span>
                 </div>
             </div>
 
@@ -133,9 +125,7 @@
             <div class="filter-bar">
                 <span class="filter-label">Show:</span>
                 <button class="filter-btn active" data-filter="all" id="filter-all">All</button>
-                <button class="filter-btn" data-filter="modified" id="filter-modified">Modified</button>
-                <button class="filter-btn" data-filter="added" id="filter-added">Added</button>
-                <button class="filter-btn" data-filter="removed" id="filter-removed">Removed</button>
+                <button class="filter-btn" data-filter="changed" id="filter-changed">Changed</button>
                 <button class="filter-btn" data-filter="unchanged" id="filter-unchanged">Unchanged</button>
 
                 <div class="filter-spacer"></div>

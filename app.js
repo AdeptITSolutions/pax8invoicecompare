@@ -345,14 +345,13 @@
 
   function updateSummary() {
     const c = diffResult.counts;
+    const changed = c.modified + c.added + c.removed;
     animateCounter('summary-total', c.total);
+    animateCounter('summary-changed', changed);
     animateCounter('summary-unchanged', c.unchanged);
-    animateCounter('summary-modified', c.modified);
-    animateCounter('summary-added', c.added);
-    animateCounter('summary-removed', c.removed);
 
     // Update labels
-    document.querySelector('#summary-total .summary-label').textContent = `SKU Lines (${c.companies} companies)`;
+    document.querySelector('#summary-total .summary-label').textContent = `Total SKUs (${c.companies} companies)`;
   }
 
   function animateCounter(id, target) {
@@ -398,7 +397,8 @@
       // Filter at company level
       const matchingSkus = company.skuDiffs.filter(sd => {
         // Status filter
-        if (currentFilter !== 'all' && sd.status !== currentFilter) return false;
+        if (currentFilter === 'changed' && sd.status === 'unchanged') return false;
+        if (currentFilter === 'unchanged' && sd.status !== 'unchanged') return false;
         // Search filter
         if (query) {
           const haystack = `${company.companyName} ${sd.sku} ${sd.a?.description || ''} ${sd.b?.description || ''}`.toLowerCase();

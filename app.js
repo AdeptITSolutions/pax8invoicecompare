@@ -289,8 +289,22 @@
           }
 
           if (changes.length > 0) {
-            skuDiffs.push({ status: 'modified', sku, a, b, changes });
-            totalModified++;
+            // Treat as unchanged if the only differences are ≤5 cent rounding in dollar fields
+            const allMinor = changes.every(c => {
+              if (c.field === 'subtotal' || c.field === 'total') {
+                const diff = Math.abs(c.b - c.a);
+                return diff > 0 && diff <= 0.10;
+              }
+              return false; // quantity or description changes are never minor
+            });
+
+            if (allMinor) {
+              skuDiffs.push({ status: 'unchanged', sku, a, b, changes: [] });
+              totalUnchanged++;
+            } else {
+              skuDiffs.push({ status: 'modified', sku, a, b, changes });
+              totalModified++;
+            }
           } else {
             skuDiffs.push({ status: 'unchanged', sku, a, b, changes: [] });
             totalUnchanged++;
@@ -309,8 +323,8 @@
         companyNameNorm: companyName,
         skuDiffs,
         hasChanges,
-        totalA: rowsA.reduce((s, r) => s + (parseFloat(r.total) || 0), 0),
-        totalB: rowsB.reduce((s, r) => s + (parseFloat(r.total) || 0), 0)
+        totalA: rowsA.reduce((s, r) => s + (parseFloat(r.subtotal) || 0), 0),
+        totalB: rowsB.reduce((s, r) => s + (parseFloat(r.subtotal) || 0), 0)
       });
     }
 
@@ -384,8 +398,8 @@
       <th>Description</th>
       <th style="text-align:right">Qty (A)</th>
       <th style="text-align:right">Qty (B)</th>
-      <th style="text-align:right">Total (A)</th>
-      <th style="text-align:right">Total (B)</th>
+      <th style="text-align:right">Subtotal (A)</th>
+      <th style="text-align:right">Subtotal (B)</th>
       <th style="text-align:right">Difference</th>
     `;
     diffThead.appendChild(headRow);
@@ -437,10 +451,10 @@
 
         const qtyA = sd.a ? formatNum(sd.a.quantity) : '—';
         const qtyB = sd.b ? formatNum(sd.b.quantity) : '—';
-        const totA = sd.a ? formatCurrency(sd.a.total) : '—';
-        const totB = sd.b ? formatCurrency(sd.b.total) : '—';
+        const totA = sd.a ? formatCurrency(sd.a.subtotal) : '—';
+        const totB = sd.b ? formatCurrency(sd.b.subtotal) : '—';
 
-        const skuDiff = roundNum((sd.b?.total || 0) - (sd.a?.total || 0));
+        const skuDiff = roundNum((sd.b?.subtotal || 0) - (sd.a?.subtotal || 0));
         const skuDiffClass = skuDiff > 0 ? 'diff-positive' : skuDiff < 0 ? 'diff-negative' : '';
         const skuDiffSign = skuDiff > 0 ? '+' : '';
 
@@ -570,7 +584,7 @@
     const detailHeaders = [
       'Company', 'Status', 'SKU', 'Description',
       'Qty (A)', 'Qty (B)', 'Qty Change',
-      'Total (A)', 'Total (B)', 'Total Change',
+      'Subtotal (A)', 'Subtotal (B)', 'Subtotal Change',
       'Changes'
     ];
     const detailRows = [detailHeaders];
@@ -594,9 +608,9 @@
         const qtyA = sd.a ? roundNum(sd.a.quantity) : '';
         const qtyB = sd.b ? roundNum(sd.b.quantity) : '';
         const qtyChg = (sd.a && sd.b) ? roundNum((sd.b?.quantity || 0) - (sd.a?.quantity || 0)) : '';
-        const totA = sd.a ? roundNum(sd.a.total) : '';
-        const totB = sd.b ? roundNum(sd.b.total) : '';
-        const totChg = roundNum((sd.b?.total || 0) - (sd.a?.total || 0));
+        const totA = sd.a ? roundNum(sd.a.subtotal) : '';
+        const totB = sd.b ? roundNum(sd.b.subtotal) : '';
+        const totChg = roundNum((sd.b?.subtotal || 0) - (sd.a?.subtotal || 0));
         const desc = sd.b?.description || sd.a?.description || '';
         const changes = sd.changes.map(c => `${c.field}: ${c.a} → ${c.b}`).join('; ');
 

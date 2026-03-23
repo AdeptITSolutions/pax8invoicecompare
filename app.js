@@ -212,19 +212,23 @@
 
   /**
    * Within a company, aggregate rows by SKU.
-   * For each SKU we sum quantity, subtotal, total and keep track of individual line items.
-   * Pass splitBySku=true to keep each row as its own entry (keyed by sku+stable description),
-   * which prevents collapsing multiple lines with the same SKU into one.
+   * Keys are always sku||type||descKey so that subscription rows, and each distinct
+   * prorate/one-time row, remain separate entries rather than being summed together.
+   *
+   * For Adept IT (isAdept=true) the description is normalised via descMatchKey so that
+   * seat-count changes in the description don't prevent matching across invoices.
+   * For all other companies the raw description is used, which keeps each uniquely-worded
+   * prorate line as its own entry and lets subscription rows match by exact description.
    */
-  function aggregateBySku(rows, splitBySku = false) {
+  function aggregateBySku(rows, isAdept = false) {
     const map = new Map();
     for (const row of rows) {
       const sku = (row.sku || 'NO-SKU').trim();
-      // Use a quantity-stripped description key so that seat-count changes in the
-      // description don't prevent the same client's row from matching across invoices.
-      const key = splitBySku
-        ? `${sku}||${descMatchKey(row.description)}`
-        : sku;
+      const type = (row.type || '').trim();
+      const descKey = isAdept
+        ? descMatchKey(row.description)
+        : (row.description || '').trim();
+      const key = `${sku}||${type}||${descKey}`;
 
       if (!map.has(key)) {
         map.set(key, {
@@ -271,11 +275,10 @@
       const rowsA = companiesA.get(companyName) || [];
       const rowsB = companiesB.get(companyName) || [];
 
-      // Adept IT Solutions has multiple lines for the same SKU that represent distinct
-      // subscriptions — split by SKU+description so they aren't collapsed into one row.
-      const splitBySku = companyName.includes('ADEPT');
-      const skuMapA = aggregateBySku(rowsA, splitBySku);
-      const skuMapB = aggregateBySku(rowsB, splitBySku);
+      // For Adept IT, normalise descriptions so seat-count changes don't break matching.
+      const isAdept = companyName.includes('ADEPT');
+      const skuMapA = aggregateBySku(rowsA, isAdept);
+      const skuMapB = aggregateBySku(rowsB, isAdept);
 
       const allSkus = new Set([...skuMapA.keys(), ...skuMapB.keys()]);
       const skuDiffs = [];

@@ -198,13 +198,19 @@
   /**
    * Within a company, aggregate rows by SKU.
    * For each SKU we sum quantity, subtotal, total and keep track of individual line items.
+   * Pass splitBySku=true to keep each row as its own entry (keyed by sku+description),
+   * which prevents collapsing multiple lines with the same SKU into one.
    */
-  function aggregateBySku(rows) {
+  function aggregateBySku(rows, splitBySku = false) {
     const map = new Map();
     for (const row of rows) {
       const sku = (row.sku || 'NO-SKU').trim();
-      if (!map.has(sku)) {
-        map.set(sku, {
+      const key = splitBySku
+        ? `${sku}||${(row.description || '').trim()}`
+        : sku;
+
+      if (!map.has(key)) {
+        map.set(key, {
           sku,
           description: row.description || '',
           type: row.type || '',
@@ -215,7 +221,7 @@
           lines: []
         });
       }
-      const agg = map.get(sku);
+      const agg = map.get(key);
       agg.quantity += parseFloat(row.quantity) || 0;
       agg.subtotal += parseFloat(row.subtotal) || 0;
       agg.total += parseFloat(row.total) || 0;
@@ -248,8 +254,11 @@
       const rowsA = companiesA.get(companyName) || [];
       const rowsB = companiesB.get(companyName) || [];
 
-      const skuMapA = aggregateBySku(rowsA);
-      const skuMapB = aggregateBySku(rowsB);
+      // Adept IT Solutions has multiple lines for the same SKU that represent distinct
+      // subscriptions — split by SKU+description so they aren't collapsed into one row.
+      const splitBySku = companyName.includes('ADEPT');
+      const skuMapA = aggregateBySku(rowsA, splitBySku);
+      const skuMapB = aggregateBySku(rowsB, splitBySku);
 
       const allSkus = new Set([...skuMapA.keys(), ...skuMapB.keys()]);
       const skuDiffs = [];

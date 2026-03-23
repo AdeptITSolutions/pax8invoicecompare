@@ -196,17 +196,34 @@
   }
 
   /**
+   * Strip all [options:...] tags and iteratively strip trailing " - N" seat counts
+   * so that descriptions like "Product - domain.com - Product - 6 [options: ] - 1 [options: ]"
+   * and "Product - domain.com - Product - 4 [options: ]" both yield the same stable key.
+   */
+  function descMatchKey(desc) {
+    let result = (desc || '').replace(/\[options:.*?\]/gi, '').trim();
+    let prev;
+    do {
+      prev = result;
+      result = result.replace(/\s*-\s*\d+\s*$/, '').trim();
+    } while (result !== prev);
+    return result;
+  }
+
+  /**
    * Within a company, aggregate rows by SKU.
    * For each SKU we sum quantity, subtotal, total and keep track of individual line items.
-   * Pass splitBySku=true to keep each row as its own entry (keyed by sku+description),
+   * Pass splitBySku=true to keep each row as its own entry (keyed by sku+stable description),
    * which prevents collapsing multiple lines with the same SKU into one.
    */
   function aggregateBySku(rows, splitBySku = false) {
     const map = new Map();
     for (const row of rows) {
       const sku = (row.sku || 'NO-SKU').trim();
+      // Use a quantity-stripped description key so that seat-count changes in the
+      // description don't prevent the same client's row from matching across invoices.
       const key = splitBySku
-        ? `${sku}||${(row.description || '').trim()}`
+        ? `${sku}||${descMatchKey(row.description)}`
         : sku;
 
       if (!map.has(key)) {
@@ -267,13 +284,16 @@
         const a = skuMapA.get(sku);
         const b = skuMapB.get(sku);
 
+        // Always use the SKU code from the data, not the map key (which may be a composite key)
+        const skuCode = (a?.sku || b?.sku || sku).split('||')[0];
+
         if (!a) {
           // Added in B
-          skuDiffs.push({ status: 'added', sku, a: null, b, changes: [] });
+          skuDiffs.push({ status: 'added', sku: skuCode, a: null, b, changes: [] });
           totalAdded++;
         } else if (!b) {
           // Removed from A
-          skuDiffs.push({ status: 'removed', sku, a, b: null, changes: [] });
+          skuDiffs.push({ status: 'removed', sku: skuCode, a, b: null, changes: [] });
           totalRemoved++;
         } else {
           // Both exist — compare aggregated values
@@ -290,9 +310,9 @@
           const totB = roundNum(b.total);
           if (totA !== totB) changes.push({ field: 'total', a: totA, b: totB });
 
-          // Check if description changed meaningfully (ignore minor wording)
-          const descA = a.description.replace(/\[options:.*?\]/g, '').trim();
-          const descB = b.description.replace(/\[options:.*?\]/g, '').trim();
+          // Check if description changed meaningfully (ignore seat counts and [options:] noise)
+          const descA = descMatchKey(a.description);
+          const descB = descMatchKey(b.description);
           if (descA !== descB) {
             changes.push({ field: 'description', a: a.description, b: b.description });
           }
@@ -308,14 +328,14 @@
             });
 
             if (allMinor) {
-              skuDiffs.push({ status: 'unchanged', sku, a, b, changes: [] });
+              skuDiffs.push({ status: 'unchanged', sku: skuCode, a, b, changes: [] });
               totalUnchanged++;
             } else {
-              skuDiffs.push({ status: 'modified', sku, a, b, changes });
+              skuDiffs.push({ status: 'modified', sku: skuCode, a, b, changes });
               totalModified++;
             }
           } else {
-            skuDiffs.push({ status: 'unchanged', sku, a, b, changes: [] });
+            skuDiffs.push({ status: 'unchanged', sku: skuCode, a, b, changes: [] });
             totalUnchanged++;
           }
         }
@@ -455,7 +475,8 @@
         const tr = document.createElement('tr');
         tr.classList.add(`row-${sd.status}`);
 
-        const desc = sd.b?.description || sd.a?.description || '';
+        const rawDesc = sd.b?.description || sd.a?.description || '';
+        const desc = descMatchKey(rawDesc); // strip [options: ] and trailing seat counts
         const shortDesc = desc.length > 80 ? desc.substring(0, 77) + '…' : desc;
 
         const qtyA = sd.a ? formatNum(sd.a.quantity) : '—';
